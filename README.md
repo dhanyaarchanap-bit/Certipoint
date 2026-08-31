@@ -1,273 +1,193 @@
-# KTU Activity Point Verification Assistant
+# 🎓 KTU Activity Point Verification Assistant (CertiPoint)
 
-## Project Overview
-
-KTU Activity Point Verification Assistant is an AI-assisted certificate verification system designed to reduce the manual workload involved in verifying student activity point certificates.
-
-The system does not replace faculty verification. Instead, it automatically extracts information from uploaded certificates, validates the data using predefined KTU activity point rules, and provides a recommendation for approval. The final decision remains with the faculty advisor.
+An AI-assisted certificate screening, OCR extraction, KTU activity point recommendation, duplicate detection, and faculty approval web application built with **Streamlit**, **Python**, **SQLite**, **pdfplumber**, and **OpenCV**.
 
 ---
 
-# Problem Statement
+## 📌 Features & System Overview
 
-Verification of activity point certificates is currently a manual process that requires faculty to inspect every uploaded certificate individually. This process is time-consuming, repetitive, and prone to human error.
+1. **Student Certificate Portal**
+   - Streamlined submission form: Register Number, Student Name, Branch, Semester, Activity Category.
+   - Drag-and-drop file upload for **PDF, PNG, JPG, and JPEG** certificates.
+   - Real-time instant OCR screening and entity extraction preview.
+   - Built-in one-click demo certificate loader for instant testing.
+   - Certificate tracking status and history view for students.
 
-The proposed system automates certificate screening, information extraction, and preliminary validation while keeping faculty in control of the final approval process.
+2. **AI & OCR Information Extraction**
+   - Hybrid PDF stream parser (`pdfplumber`) & image OCR pipeline (`pytesseract` + OpenCV).
+   - Extracts: **Student Name**, **Activity / Course Title**, **Event Date**, **Issuing Organization**, and **Certificate Serial / Number**.
+   - Advanced OpenCV image preprocessing (Grayscale, Bilateral Filtering, CLAHE Contrast Enhancement, Otsu Binarization).
 
----
+3. **Validation & Duplicate Detection Engine**
+   - Multi-field completeness verification (Missing fields detection).
+   - Duplicate submission detection via **cryptographic SHA-256 file hashes** and **fuzzy matching** on `Register Number + Activity Title + Date`.
+   - Automated confidence scoring (0 - 100%) and KTU recommendation classification:
+     - **Confidence > 90%** ➜ `Recommended` (Green)
+     - **Confidence 60% – 90%** ➜ `Manual Verification Required` (Yellow)
+     - **Confidence < 60% or Duplicate** ➜ `Flagged` (Red)
 
-# Objectives
+4. **KTU Activity Point Recommendation Engine**
+   - Configurable rule engine mapping categories to KTU points:
+     - **NPTEL Course** ➜ 20 - 50 points (with Elite / Gold bonuses)
+     - **Workshop** ➜ 10 - 20 points
+     - **Internship** ➜ 20 - 40 points
+     - **Technical Quiz** ➜ 5 - 15 points
+     - **Hackathon** ➜ 15 - 30 points (Winner / Finalist heuristics)
+     - **Paper Presentation** ➜ 15 - 30 points
+     - **Industrial Visit** ➜ 5 - 10 points
+     - **NSS / NCC / Community Service** ➜ 15 - 30 points
+     - **Professional Body Activity** ➜ 10 - 20 points
+     - **Sports / Cultural Competition** ➜ 10 - 25 points
+   - Category point capping and validation.
 
-* Reduce manual verification effort.
-* Automatically extract information from certificates.
-* Detect incomplete or duplicate submissions.
-* Calculate suggested activity points.
-* Recommend approval status based on confidence scores.
-* Provide a centralized faculty dashboard.
-* Export approved records for reporting.
+5. **Faculty Verification Dashboard & Studio**
+   - Secure faculty authentication (`faculty` / `admin123`).
+   - Real-time KPI summary (Total Uploads, Pending, Recommended, Manual Review, Flagged, Approved).
+   - Search & multi-parameter filtering (by Register No, status, category, date).
+   - Split-screen verification studio:
+     - **Left**: Document viewer with high-resolution PDF/image rendering and download option.
+     - **Right**: Extracted metadata editor, point adjustment slider, faculty remarks, and approval/rejection buttons.
+   - 1-Click Batch Approval for all recommended certificates.
 
----
-
-# System Workflow
-
-## Student Side
-
-1. Student opens the application.
-2. Student enters Register Number.
-3. Student selects Activity Category.
-4. Student uploads a certificate (PDF/JPG/PNG).
-5. Student submits the application.
-
-### Input
-
-* Register Number
-* Activity Category
-* Certificate File
-
----
-
-## Certificate Processing
-
-### Step 1: File Upload
-
-The uploaded certificate is stored securely in the system.
-
-### Step 2: OCR/Text Extraction
-
-The system extracts text using:
-
-* pdfplumber (for PDFs)
-* Tesseract OCR (for images)
-
-### Step 3: Information Extraction
-
-The system identifies:
-
-* Student Name
-* Activity Name
-* Date
-* Issuing Organization
-* Certificate Number (if available)
+6. **Reporting & Auditing Module**
+   - Export approved records or complete database records to **Excel (`.xlsx`)** with OpenPyXL custom styling (colored headers, status pills, auto-fit columns, summary totals).
+   - Export to **CSV (`.csv`)**.
 
 ---
 
-## Validation Engine
+## 🏗️ Project Architecture & File Structure
 
-The extracted information is checked against predefined rules.
-
-### Validation Checks
-
-#### Required Field Check
-
-Verify that:
-
-* Student Name exists
-* Activity Name exists
-* Date exists
-* Organization exists
-
-#### Duplicate Detection
-
-Check for existing records using:
-
-* Register Number
-* Activity Name
-* Date
-
-If a duplicate is found, the certificate is flagged.
-
----
-
-## Activity Point Calculation
-
-The system maps the selected activity category to predefined KTU activity points.
-
-Example:
-
-| Activity Category | Points |
-| ----------------- | ------ |
-| NPTEL Course      | 20     |
-| Workshop          | 10     |
-| Internship        | 20     |
-| Technical Quiz    | 5      |
-
-The calculated points are displayed to the faculty.
+```
+c:/Users/DHANYA/Desktop/Certipoint-1/
+├── app.py                      # Main entry application & unified navigation hub
+├── pages/
+│   ├── student.py              # Student upload and tracking portal
+│   ├── 1_🎓_Student.py          # Streamlit multi-page student wrapper
+│   ├── faculty.py              # Faculty dashboard and verification studio
+│   └── 2_👨‍🏫_Faculty.py          # Streamlit multi-page faculty wrapper
+├── utils/
+│   ├── __init__.py
+│   ├── database.py             # SQLite database layer & CRUD helper functions
+│   ├── ocr.py                  # OCR & PDF/image preprocessing pipeline
+│   ├── extractor.py            # NLP entity extraction (Name, Activity, Date, Org, Cert ID)
+│   ├── validator.py            # Validation rules, duplicate detection, and confidence scoring
+│   ├── rules.py                # KTU activity point rules & heuristics engine
+│   └── reports.py              # Styled Excel (.xlsx) & CSV export generator
+├── database/
+│   ├── schema.sql              # Clean SQLite DDL schema
+│   ├── sample_data.py          # Sample data seeder & certificate generator
+│   └── certipoint.db           # SQLite database file
+├── assets/
+│   ├── style.css               # Modern CSS styling
+│   └── sample_certificates/    # Synthetic test certificates (PDF & PNG)
+├── uploads/                    # Secure student upload storage directory
+├── requirements.txt            # Python dependencies
+└── README.md                   # System documentation
+```
 
 ---
 
-## Confidence Score Generation
+## 💾 Database Schema
 
-The system calculates a confidence score based on:
+### 1. `students`
+- `id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `register_number` TEXT UNIQUE NOT NULL
+- `student_name` TEXT NOT NULL
+- `email` TEXT
+- `branch` TEXT
+- `semester` TEXT
+- `created_at` TIMESTAMP
 
-* OCR quality
-* Field extraction success
-* Data completeness
+### 2. `certificates`
+- `id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `register_number` TEXT NOT NULL (FK -> `students.register_number`)
+- `activity_category` TEXT NOT NULL
+- `file_path` TEXT NOT NULL
+- `file_name` TEXT NOT NULL
+- `file_type` TEXT
+- `file_hash` TEXT (SHA-256 for exact duplicates)
+- `upload_date` TIMESTAMP
 
-### Status Assignment
+### 3. `extraction`
+- `id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `certificate_id` INTEGER NOT NULL UNIQUE (FK -> `certificates.id`)
+- `extracted_name` TEXT
+- `extracted_activity` TEXT
+- `extracted_date` TEXT
+- `extracted_organization` TEXT
+- `certificate_number` TEXT
+- `confidence_score` REAL
+- `raw_text` TEXT
+- `created_at` TIMESTAMP
 
-| Confidence Score | Status                       |
-| ---------------- | ---------------------------- |
-| Above 90%        | Recommended                  |
-| 60% – 90%        | Manual Verification Required |
-| Below 60%        | Flagged                      |
+### 4. `verification`
+- `id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `certificate_id` INTEGER NOT NULL UNIQUE (FK -> `certificates.id`)
+- `suggested_points` INTEGER
+- `awarded_points` INTEGER
+- `status` TEXT (`Recommended`, `Manual Verification Required`, `Flagged`, `Approved`, `Rejected`)
+- `faculty_remark` TEXT
+- `approved_by` TEXT
+- `approval_date` TIMESTAMP
+- `updated_at` TIMESTAMP
 
----
-
-## Faculty Dashboard
-
-Faculty members log in to review submissions.
-
-### Dashboard Features
-
-* View all certificates
-* Search by Register Number
-* Filter by status
-* View uploaded certificate
-* View extracted information
-* Approve submission
-* Reject submission
-
-### Status Categories
-
-* Pending
-* Recommended
-* Flagged
-* Approved
-* Rejected
-
----
-
-## Export Module
-
-Faculty can export approved records to:
-
-* Excel (.xlsx)
-* CSV (.csv)
-
-Exported fields:
-
-* Register Number
-* Student Name
-* Activity Category
-* Points Awarded
-* Approval Status
+### 5. `activity_rules`
+- `id` INTEGER PRIMARY KEY AUTOINCREMENT
+- `category_name` TEXT UNIQUE NOT NULL
+- `default_points` INTEGER NOT NULL
+- `max_points` INTEGER NOT NULL
+- `description` TEXT
 
 ---
 
-# Database Design
+## 🚀 Installation & Setup Instructions
 
-## Students Table
+### 1. Prerequisites
+- Python 3.9+
+- (Optional for scanned image OCR) Tesseract OCR engine
 
-* id
-* register_number
-* student_name
+### 2. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
 
-## Certificates Table
+### 3. Seed Sample Data & Generate Test Certificates
+```bash
+python database/sample_data.py
+```
 
-* id
-* register_number
-* file_path
-* activity_category
-* upload_date
+### 4. Launch the Web Application
+```bash
+streamlit run app.py
+```
 
-## Extraction Table
-
-* id
-* certificate_id
-* extracted_name
-* extracted_activity
-* extracted_date
-* extracted_organization
-* confidence_score
-
-## Verification Table
-
-* id
-* certificate_id
-* suggested_points
-* status
-* faculty_remark
+The application will be accessible at: `http://localhost:8501`
 
 ---
 
-# Technology Stack
+## 🔑 Demo Credentials
 
-## Frontend
-
-* Streamlit
-
-## Backend
-
-* Python
-
-## Database
-
-* SQLite
-
-## OCR
-
-* Tesseract OCR
-
-## PDF Processing
-
-* pdfplumber
-
-## Data Processing
-
-* Pandas
-
-## Report Export
-
-* OpenPyXL
+| Role | Username | Password | Purpose |
+|------|----------|----------|---------|
+| **Faculty Advisor** | `faculty` | `admin123` | Certificate review, point awarding & approval |
+| **Faculty Advisor** | `advisor` | `ktu2024` | Review queue access |
+| **Head of Department** | `hod` | `cetcsdept` | Final auditing & reports |
+| **Student** | *(No login required)* | — | Open submission & tracking portal |
 
 ---
 
-# Project Flow Diagram
+## 🧪 Testing the Application
 
-Student Upload Certificate
-↓
-OCR / PDF Text Extraction
-↓
-Information Extraction
-↓
-Validation Engine
-↓
-Duplicate Detection
-↓
-Activity Point Calculation
-↓
-Confidence Score Generation
-↓
-Recommended / Manual Verification / Flagged
-↓
-Faculty Dashboard
-↓
-Approve or Reject
-↓
-Export Approved Records
-
----
-
-# Expected Outcome
-
-The system assists faculty by automatically screening certificates, extracting important information, calculating activity points, and recommending actions. This reduces verification time while maintaining faculty control over final approval decisions.
+1. **Student Flow**:
+   - Open **Student Portal** from navigation.
+   - Click **"Quick Demo / Sample Certificate Loader"** and choose any test certificate (e.g. `NPTEL Course (PDF)`).
+   - Review the instant real-time OCR extraction, confidence score, and suggested activity points.
+   - Click **"Final Submit Certificate for Faculty Verification"**.
+2. **Duplicate Detection**:
+   - Re-submit the same certificate file or same event name/date for the student.
+   - The system immediately triggers a duplicate warning and flags the certificate with `Flagged`.
+3. **Faculty Verification Flow**:
+   - Navigate to **Faculty Hub** and log in with `faculty` / `admin123`.
+   - Inspect submissions with split-screen document preview.
+   - Edit metadata if needed, adjust points, and click **"Approve Certificate"**.
+   - Download the styled Excel audit report.
